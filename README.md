@@ -13,15 +13,23 @@ A terminal-based chat tool for interacting with LLMs via OpenRouter API.
 
 ## Installation
 
+### Homebrew (Recommended)
+
 ```bash
-# From PyPI (when published)
+brew tap kentaroh-toyoda/ask
+brew install ask
+```
+
+### Alternative Methods
+
+```bash
+# From PyPI (coming soon)
 pip install terminal-chat
 
 # From source
+git clone https://github.com/kentaroh-toyoda/terminal-chat.git
+cd terminal-chat
 pip install .
-
-# Development mode
-pip install -e .
 ```
 
 ## Quick Start
