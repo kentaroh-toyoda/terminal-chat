@@ -197,7 +197,7 @@ pip install -e .  # Editable install for development
 
 If you find this project helpful, consider supporting development:
 
-**USDC (Ethereum)**: [0x7b4A7c0612CCa8c438dd0b18ba2855f8BF7b9412](ethereum:0x7b4A7c0612CCa8c438dd0b18ba2855f8BF7b9412) ([View on Etherscan](https://etherscan.io/address/0x7b4A7c0612CCa8c438dd0b18ba2855f8BF7b9412))
+**USDC (Ethereum)**: [0xDf6B7a400bCA18c30876e843B96f218A5Ed1c5BC](ethereum:0xDf6B7a400bCA18c30876e843B96f218A5Ed1c5BC) ([View on Etherscan](https://etherscan.io/address/0xDf6B7a400bCA18c30876e843B96f218A5Ed1c5BC))
 
 ## License
 
