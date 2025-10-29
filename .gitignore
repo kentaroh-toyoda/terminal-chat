@@ -26,6 +26,22 @@ build/
 *.swo
 *~
 
+# Testing
+.coverage
+coverage.xml
+htmlcov/
+.pytest_cache/
+
+# Temporary documentation
+TESTING.md
+TEST_FIXES_APPLIED.md
+TEST_ISSUES.md
+
+# Homebrew formula (belongs in tap repo)
+ask.rb
+HOMEBREW_TAP_README.md
+RELEASE_NOTES_v0.1.0.md
+
 # OS
 .DS_Store
 Thumbs.db
