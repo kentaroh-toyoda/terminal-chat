@@ -2,13 +2,6 @@
 
 A terminal-based chat tool for interacting with LLMs via OpenRouter API.
 
-## ⚠️ Beta Status
-
-**This is a beta release (v0.1.0)** - The core functionality is stable and well-tested, but some advanced features are still being refined.
-
-- **Stable Features**: Chat interface, configuration, cost tracking, basic guardrails
-- **Bug Reports**: Please report issues at [GitHub Issues](https://github.com/kentaroh_toyoda/terminal-chat/issues)
-
 ## Features
 
 - Interactive conversation mode with conversation history
@@ -184,6 +177,14 @@ Tokens: 145 in / 523 out | Cost: $0.0028 ($0.0001 + $0.0026)
 - **anthropic/claude-haiku-4.5**: $1 input / $5 output
 - **openai/gpt-5-mini**: $0.25 input / $2 output
 - **google/gemini-2.5-flash**: $0.30 input / $2.50 output
+
+## ⚠️ Beta Status
+
+**This is a beta release (v0.1.0)** - The core functionality is stable and well-tested, but some advanced features are still being refined.
+
+- **Stable Features**: Chat interface, configuration, cost tracking, basic guardrails
+- **Bug Reports**: Please report issues at [GitHub Issues](https://github.com/kentaroh_toyoda/terminal-chat/issues)
+
 
 ## Development
 
