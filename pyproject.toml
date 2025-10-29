@@ -1,0 +1,69 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "terminal-chat"
+version = "0.1.0"
+description = "A terminal-based chat tool for interacting with LLMs via OpenRouter API"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "MIT"}
+authors = [
+    {name = "Kentaroh Toyoda", email = "kentaroh.toyoda@gmail.com"}
+]
+keywords = ["terminal", "gpt", "llm", "openrouter", "chat", "ai"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Terminals",
+    "Topic :: Communications :: Chat",
+]
+
+dependencies = [
+    "requests>=2.31.0",
+    "python-dotenv>=1.0.0",
+    "rich>=13.7.0",
+    "prompt_toolkit>=3.0.43",
+    "keyring>=24.0.0",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0",
+    "pytest-mock>=3.11.0",
+    "responses>=0.23.0",
+]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0",
+    "pytest-mock>=3.11.0",
+    "responses>=0.23.0",
+    "black>=23.0.0",
+    "flake8>=6.0.0",
+    "mypy>=1.5.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/kentaroh_toyoda/terminal-chat"
+Repository = "https://github.com/kentaroh_toyoda/terminal-chat"
+Issues = "https://github.com/kentaroh_toyoda/terminal-chat/issues"
+
+[project.scripts]
+ask = "terminal_chat.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["terminal_chat*"]
+
+[tool.setuptools.package-data]
+terminal_chat = ["*.md"]

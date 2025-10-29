@@ -1,56 +1,53 @@
-# Terminal GPT
+# Ask: Terminal GPT
 
 A terminal-based chat tool for interacting with LLMs via OpenRouter API.
 
+## ⚠️ Beta Status
+
+**This is a beta release (v0.1.0)** - The core functionality is stable and well-tested, but some advanced features are still being refined.
+
+- **Stable Features**: Chat interface, configuration, cost tracking, basic guardrails
+- **Bug Reports**: Please report issues at [GitHub Issues](https://github.com/kentaroh_toyoda/terminal-chat/issues)
+
 ## Features
 
-- **Secure API token storage** - Tokens stored in system keychain (macOS Keychain, Windows Credential Manager, Linux Secret Service)
 - Interactive conversation mode with conversation history
-- Streaming responses for real-time output
-- Multi-line input support (Meta+Enter for newlines)
-- Configurable markdown rendering and display options
-- First-run setup wizard
+- Streaming responses with markdown rendering
+- Secure API token storage in system keychain
+- Customizable guardrails for content safety
+- Token usage and cost tracking
 - Support for all OpenRouter models
+
+## Installation
+
+```bash
+# From PyPI (when published)
+pip install terminal-chat
+
+# From source
+pip install .
+
+# Development mode
+pip install -e .
+```
 
 ## Quick Start
 
-### 1. Install Python dependencies
+Run `ask` for the first time to launch the setup wizard:
 
 ```bash
-pip install -r requirements.txt
-```
-
-### 2. Run the setup wizard
-
-The first time you run `ask`, it will automatically launch an interactive setup wizard:
-
-```bash
-./ask
+ask
 ```
 
 The wizard will:
 1. Prompt for your OpenRouter API token (get one at https://openrouter.ai/keys)
 2. Let you choose your preferred model
-3. Store your token **securely in your system keychain**
+3. Store your token securely in your system keychain
 4. Create `~/.askrc` with your preferences
 
 **That's it!** You're ready to chat.
 
-### 3. (Optional) Make the script accessible globally
-
-Create a symlink to use `ask` from anywhere:
-
-```bash
-# Linux/macOS
-sudo ln -s "$(pwd)/ask" /usr/local/bin/ask
-
-# Or add to your PATH
-export PATH="$PATH:$(pwd)"
-```
-
 ## Usage
-
-### Start a conversation
 
 ```bash
 # Enter conversation mode
@@ -58,196 +55,149 @@ ask
 
 # Start with a question
 ask "What is the capital of France?"
-
-# Multi-word questions
-ask What is the meaning of life?
 ```
 
 ### In conversation mode
 
-- **Send message**: Type your message and press `Enter`
-- **New line**: Press `Shift+Enter` to add a line break
-- **Interrupt response**: Press `ESC` to stop the AI response
-- **Exit**: Type `bye`, `quit`, or `exit`, or press `Ctrl-C`
+- **Send message**: Type and press `Enter`
+- **New line**: Press `Shift+Enter`
+- **Interrupt response**: Press `ESC`
+- **Exit**: Type `bye`, `quit`, `exit`, or press `Ctrl-C`
 
 ## Configuration
 
-### Configuration files
+Configuration files are loaded in order:
+1. `~/.askrc` (user-level)
+2. `./.askrc` (project-level, overrides user config)
 
-The tool loads configuration in this order:
-1. `~/.askrc` (user-level config)
-2. `./.askrc` (project-level config, overrides user config)
+### Configuration Options
 
-### Configuration options
+| Variable | Default | Description |
+|----------|---------|-------------|
+| **Required** |||
+| `LLM` | *(required)* | Model to use (format: `provider/model`) |
+| `API_TOKEN` | *(set via `ask --setup`)* | OpenRouter API token (stored in keychain) |
+| **Display** |||
+| `RENDER_MARKDOWN` | `true` | Enable markdown formatting |
+| `SHOW_PANELS` | `true` | Show bordered panels around responses |
+| `SHOW_COST` | `false` | Display token usage and cost after each response |
+| `INPUT_PREFIX` | `"> "` | Customize prompt prefix |
+| **API Limits** |||
+| `MAX_TOKENS` | `4096` | Maximum tokens per API request |
+| `MAX_INPUT_LENGTH` | `10000` | Maximum characters in user input |
+| **Guardrails** |||
+| `GUARDRAIL` | `system` | Mode: `system`, `external`, `intent`, or `none` |
+| `EXTERNAL_GUARDRAIL_MODEL` | `meta-llama/llama-guard-4-12b` | Model for external guardrails |
+| `EXTERNAL_GUARDRAIL_CHECK_DIRECTIONS` | `both` | When to check: `input`, `output`, or `both` |
+| `SHOW_INTENT` | `true` | Show intent analysis (for `intent` mode) |
+| **Advanced** |||
+| `SYSTEM_PROMPT` | *(default safety prompt)* | Custom system prompt for the LLM |
 
-- **LLM** (required): The OpenRouter model to use
-  - Format: `provider/model`
-  - Examples: `anthropic/claude-3.5-haiku`, `openai/gpt-4`, `google/gemini-pro`
-
-- **API_TOKEN** (required): Your OpenRouter API token
-  - Can also be set via `ASK_API_TOKEN` environment variable
-
-- **RENDER_MARKDOWN** (optional): Enable markdown rendering
-  - Values: `true` or `false`
-  - Default: `true`
-
-- **SHOW_PANELS** (optional): Enable/disable surrounding panels/boxes
-  - Values: `true` or `false`
-  - Default: `true`
-  - Set to `false` for a cleaner, minimal output
-
-- **SHOW_COST** (optional): Display token usage and cost after each response
-  - Values: `true` or `false`
-  - Default: `false`
-  - Shows input/output tokens and estimated cost based on model pricing
-  - Supports: `anthropic/claude-haiku-4.5`, `openai/gpt-5-mini`, `google/gemini-2.5-flash`
-
-### Environment variable fallback
-
-You can use the `ASK_API_TOKEN` environment variable instead of storing the token in a file:
+### Example .askrc
 
 ```bash
-export ASK_API_TOKEN=your_token_here
-ask "Hello!"
+# Required
+LLM=anthropic/claude-haiku-4.5
+# API_TOKEN stored in keychain (run: ask --setup)
+
+# Display
+RENDER_MARKDOWN=true
+SHOW_PANELS=true
+SHOW_COST=false
+INPUT_PREFIX=>
+
+# API Limits
+MAX_TOKENS=4096
+MAX_INPUT_LENGTH=10000
+
+# Guardrails
+GUARDRAIL=system
+EXTERNAL_GUARDRAIL_MODEL=meta-llama/llama-guard-4-12b  # For GUARDRAIL=external
+EXTERNAL_GUARDRAIL_CHECK_DIRECTIONS=both  # For GUARDRAIL=external
+SHOW_INTENT=true  # For GUARDRAIL=intent
+
+# Advanced
+# SYSTEM_PROMPT=You are a helpful AI assistant.
+```
+
+## Guardrails
+
+Terminal Chat provides four content safety modes:
+
+### `system` (Default)
+Uses system prompts to guide safe LLM behavior. Fast, no extra API calls, works with all models.
+
+```bash
+GUARDRAIL=system
+```
+
+### `external`
+Uses Llama Guard 4 as an independent content filter. Checks input/output against 14 safety categories (Violent Crimes, Non-Violent Crimes, Sex-Related Crimes, Child Exploitation, Defamation, Specialized Advice, Privacy, IP Violations, Indiscriminate Weapons, Hate Speech, Self-Harm, Sexual Content, Elections, Code Interpreter Abuse).
+
+```bash
+GUARDRAIL=external
+EXTERNAL_GUARDRAIL_MODEL=meta-llama/llama-guard-4-12b
+EXTERNAL_GUARDRAIL_CHECK_DIRECTIONS=both  # input, output, or both
+```
+
+**Blocked message example:**
+```
+❌ Input blocked by guardrail: Indiscriminate Weapons (S9)
+Please rephrase your message to avoid this content.
+```
+
+### `intent`
+LLM analyzes request intent and appropriateness before responding. Context-aware but adds overhead.
+
+```bash
+GUARDRAIL=intent
+SHOW_INTENT=true
+```
+
+### `none`
+Disables all guardrails. ⚠️ Use with caution in trusted environments only.
+
+```bash
+GUARDRAIL=none
 ```
 
 ## Security
 
-### Secure Token Storage
+### Token Storage
 
-Terminal GPT stores your OpenRouter API token securely in your system's keychain:
-
+Your API token is stored securely in your system keychain:
 - **macOS**: Keychain Access
 - **Windows**: Credential Manager
 - **Linux**: Secret Service (GNOME Keyring, KWallet, etc.)
 
-Your token is **never stored in plain text** in the config file when using the setup wizard.
+Run `ask --setup` to store or migrate your token. Tokens are never stored in plain text in config files.
 
-### Migrating Existing Tokens
+### Cost Tracking
 
-If you have an existing `~/.askrc` with a plain text `API_TOKEN`, you'll see a security warning. To migrate to secure storage:
+Enable cost monitoring with `SHOW_COST=true`:
 
-```bash
-ask --setup
-```
-
-This will:
-1. Detect your existing token
-2. Offer to migrate it to the system keychain
-3. Remove the plain text token from `~/.askrc`
-4. Keep all your other settings
-
-### Re-running Setup
-
-You can re-run the setup wizard at any time to:
-- Change your API token
-- Switch your default model
-- Migrate from plain text to keychain storage
-
-```bash
-ask --setup
-# or
-ask -s
-```
-
-## Examples
-
-### Basic conversation
-
-```bash
-$ ask "Explain quantum computing"
-```
-
-### Using different models
-
-Edit your `.askrc` to change the default model:
-
-```bash
-# Use GPT-4
-LLM=openai/gpt-4
-
-# Use Claude 3.5 Sonnet
-LLM=anthropic/claude-3.5-sonnet
-
-# Use Gemini Pro
-LLM=google/gemini-pro
-```
-
-### Project-specific configuration
-
-Create a `.askrc` in your project directory for project-specific settings:
-
-```bash
-cd my-project
-echo "LLM=anthropic/claude-haiku-4.5" > .askrc
-echo "RENDER_MARKDOWN=false" >> .askrc
-chmod 600 .askrc
-```
-
-### Cost tracking
-
-Enable cost tracking to monitor your API usage:
-
-```bash
-# Add to your ~/.askrc
-SHOW_COST=true
-```
-
-After each response, you'll see:
 ```
 Tokens: 145 in / 523 out | Cost: $0.0028 ($0.0001 + $0.0026)
 ```
 
-Pricing (per million tokens):
+**Pricing (per million tokens):**
 - **anthropic/claude-haiku-4.5**: $1 input / $5 output
 - **openai/gpt-5-mini**: $0.25 input / $2 output
 - **google/gemini-2.5-flash**: $0.30 input / $2.50 output
 
-## Security
-
-- Always set `.askrc` permissions to `600` (read/write for user only)
-- Never commit `.askrc` files with real API tokens to version control
-- Use environment variables for CI/CD environments
-- The tool will warn you if your config file has insecure permissions
-
-## Troubleshooting
-
-### "API_TOKEN not specified" error
-
-Make sure you have either:
-- Created `~/.askrc` with `API_TOKEN=your_token`
-- Set the `ASK_API_TOKEN` environment variable
-
-### "LLM not specified" error
-
-Add the `LLM` setting to your `~/.askrc` file:
+## Development
 
 ```bash
-LLM=anthropic/claude-3.5-haiku
+git clone https://github.com/kentaroh_toyoda/terminal-chat.git
+cd terminal-chat
+pip install -e .  # Editable install for development
 ```
 
-### "API Error (401)"
+## Support
 
-Your API token is invalid. Check your OpenRouter account at https://openrouter.ai/keys
+If you find this project helpful, consider supporting development:
 
-### "API Error (429)"
-
-You've hit the rate limit. Wait a moment and try again.
-
-### Markdown rendering issues
-
-Disable markdown rendering in your config:
-
-```bash
-RENDER_MARKDOWN=false
-```
-
-## How it works
-
-1. **Configuration Loading**: Loads settings from `~/.askrc` and `./.askrc`
-2. **Conversation Management**: Maintains chat history using a sliding window (keeps first message + last 20 messages)
-3. **API Streaming**: Streams responses from OpenRouter API in real-time
-4. **Session Management**: Clears conversation history when you exit
+**USDC (Ethereum)**: [0x7b4A7c0612CCa8c438dd0b18ba2855f8BF7b9412](ethereum:0x7b4A7c0612CCa8c438dd0b18ba2855f8BF7b9412) ([View on Etherscan](https://etherscan.io/address/0x7b4A7c0612CCa8c438dd0b18ba2855f8BF7b9412))
 
 ## License
 

@@ -12,6 +12,13 @@ env/
 ENV/
 .venv
 
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+*.egg
+.eggs/
+
 # IDE
 .vscode/
 .idea/

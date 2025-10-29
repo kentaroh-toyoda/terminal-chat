@@ -44,7 +44,7 @@ sudo ln -s "$(pwd)/ask" /usr/local/bin/ask
 
 Add this to your `~/.bashrc` or `~/.zshrc`:
 ```bash
-export PATH="$PATH:/Users/kentaroh_toyoda/projects/terminal-gpt"
+export PATH="$PATH:/Users/kentaroh_toyoda/projects/terminal-chat"
 ```
 
 Then reload:
