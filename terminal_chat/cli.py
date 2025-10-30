@@ -9,20 +9,6 @@ import signal
 import threading
 from pathlib import Path
 from typing import List, Dict, Optional
-import requests
-from dotenv import dotenv_values
-from rich.console import Console
-from rich.markdown import Markdown
-from rich.panel import Panel
-from rich.live import Live
-from rich.spinner import Spinner
-from rich.prompt import Prompt, Confirm
-from rich.markup import escape
-from prompt_toolkit import PromptSession
-from prompt_toolkit.key_binding import KeyBindings
-from prompt_toolkit.keys import Keys
-from prompt_toolkit.filters import Condition
-import keyring
 
 # Platform-specific imports for keyboard input
 if sys.platform == 'win32':
@@ -135,11 +121,16 @@ class KeyboardMonitor:
 class SetupWizard:
     """Interactive setup wizard for first-run configuration."""
 
-    def __init__(self, console: Console):
+    def __init__(self, console):
         self.console = console
 
     def run(self, migrate_existing: bool = False) -> bool:
         """Run the setup wizard. Returns True if setup was successful."""
+        from dotenv import dotenv_values
+        import keyring
+        from rich.panel import Panel
+        from rich.prompt import Prompt, Confirm
+
         # Check for existing configuration
         config_path = Path.home() / '.askrc'
         existing_config = {}
@@ -197,6 +188,10 @@ class SetupWizard:
 
     def _update_existing_config(self, existing_config: dict, has_keyring_token: bool) -> bool:
         """Update existing configuration."""
+        from rich.panel import Panel
+        from rich.prompt import Prompt
+        import keyring
+
         current_model = existing_config.get('LLM', 'not set')
         token_location = "keyring" if has_keyring_token else "config file"
 
@@ -281,6 +276,8 @@ class SetupWizard:
 
     def _interactive_setup(self) -> bool:
         """Interactive setup for new users."""
+        from rich.prompt import Prompt
+
         # Get API token
         self.console.print("[bold]Step 1:[/bold] OpenRouter API Token")
         self.console.print("Get your API token from: [cyan]https://openrouter.ai/keys[/cyan]")
@@ -315,6 +312,8 @@ class SetupWizard:
 
     def _save_to_keychain(self, api_token: str, model: str, existing_config: dict, remove_from_file: bool = True) -> bool:
         """Save API token to keychain and update config file."""
+        import keyring
+
         # Save to keychain
         keyring_success = False
         try:
@@ -402,6 +401,8 @@ class Config:
 
     def _load_config(self):
         """Load configuration from ~/.askrc and ./.askrc, with local override."""
+        from dotenv import dotenv_values
+
         # Load home config first
         home_config_path = Path.home() / '.askrc'
         config = {}
@@ -413,6 +414,9 @@ class Config:
         # Override with local config if exists
         local_config_path = Path.cwd() / '.askrc'
         if local_config_path.exists() and local_config_path != home_config_path:
+            from rich.console import Console
+            from rich.prompt import Confirm
+
             # Warn about loading local config
             console = Console()
             console.print(f"\n[yellow]⚠️  Warning:[/yellow] Loading local config from [cyan]{local_config_path}[/cyan]")
@@ -433,6 +437,7 @@ class Config:
         # Get input prefix, escape Rich markup, and ensure it ends with a space
         input_prefix = config.get('INPUT_PREFIX', '> ')
         # Escape Rich markup to prevent injection attacks
+        from rich.markup import escape
         input_prefix = escape(input_prefix)
         self.input_prefix = input_prefix if input_prefix.endswith(' ') else input_prefix + ' '
 
@@ -479,6 +484,8 @@ class Config:
 
     def _load_api_token(self, config: dict) -> Optional[str]:
         """Load API token from keychain, environment, or file (in that order)."""
+        import keyring
+
         # Try keychain first
         try:
             token = keyring.get_password(KEYRING_SERVICE, KEYRING_USERNAME)
@@ -504,6 +511,8 @@ class Config:
 
     def _suggest_migration(self, file_token: str):
         """Suggest migrating plain text token to keychain."""
+        from rich.console import Console
+
         console = Console()
         console.print(
             "\n[yellow]Security Notice:[/yellow] Your API token is stored in plain text.\n"
@@ -611,6 +620,8 @@ class OpenRouterClient:
 
     def chat_stream(self, messages: List[Dict[str, str]]):
         """Stream chat completion from OpenRouter API. Yields content chunks."""
+        import requests
+
         self.last_usage = None  # Reset usage for new request
         headers = {
             "Authorization": f"Bearer {self.api_token}",
@@ -693,7 +704,7 @@ class OpenRouterClient:
 class GuardrailChecker:
     """Handles content safety checking using system prompts or external models."""
 
-    def __init__(self, config: 'Config', api_token: str, console: Console):
+    def __init__(self, config: 'Config', api_token: str, console):
         self.config = config
         self.api_token = api_token
         self.console = console
@@ -762,6 +773,8 @@ class GuardrailChecker:
 
     def _check_external(self, text: str, check_type: str) -> tuple[bool, str]:
         """Call external guardrail model (e.g., Llama Guard). Returns (allowed, reason)."""
+        import requests
+
         try:
             headers = {
                 "Authorization": f"Bearer {self.api_token}",
@@ -816,6 +829,8 @@ class GuardrailChecker:
 
     def _handle_failure(self, check_type: str, error: str = "API call failed") -> tuple[bool, str]:
         """Handle guardrail check failure. Ask user whether to proceed."""
+        from rich.prompt import Confirm
+
         self.console.print(f"\n[yellow]⚠️  Guardrail check failed:[/yellow] {error}")
         self.console.print(f"[yellow]Could not verify {check_type} safety.[/yellow]")
 
@@ -868,12 +883,14 @@ class TerminalChat:
     """Main terminal chat interface."""
 
     def __init__(self, config: Config):
+        from rich.console import Console
+
         self.config = config
         self.console = Console()
         self.conversation = ConversationManager()
         self.client = OpenRouterClient(config.api_token, config.llm, config.max_tokens)
         self.cost_tracker = CostTracker(config.llm) if config.show_cost else None
-        self.session = PromptSession()
+        self.session = None  # Lazy-load PromptSession
         self.keyboard_monitor = KeyboardMonitor()
         self.guardrail_checker = GuardrailChecker(config, config.api_token, self.console)
 
@@ -912,6 +929,11 @@ class TerminalChat:
     def _get_user_input(self) -> Optional[str]:
         """Get multi-line user input (Shift+Enter for newline, Enter to send)."""
         try:
+            # Lazy-load PromptSession on first use
+            if self.session is None:
+                from prompt_toolkit import PromptSession
+                self.session = PromptSession()
+
             # With multiline=False, Enter submits and the default behavior works
             # But we need to allow Shift+Enter for newlines, so use a custom approach
             from prompt_toolkit.key_binding import KeyBindings as KB
@@ -942,6 +964,8 @@ class TerminalChat:
 
     def chat(self, initial_message: Optional[str] = None):
         """Start the chat conversation."""
+        from rich.panel import Panel
+
         # Build guardrail status text
         if self.config.guardrail == "system":
             guardrail_status = f"Guardrail: [cyan]System prompt[/cyan]"
@@ -1030,6 +1054,11 @@ class TerminalChat:
             self.keyboard_monitor.start()
 
             try:
+                from rich.live import Live
+                from rich.spinner import Spinner
+                from rich.markdown import Markdown
+                from rich.panel import Panel
+
                 # Stream the response
                 with Live(console=self.console, refresh_per_second=10) as live:
                     live.update(Spinner("dots", text="Thinking..."))
@@ -1115,10 +1144,10 @@ class TerminalChat:
 def main():
     """Main entry point."""
     try:
-        console = Console()
-
         # Check for --setup flag
         if len(sys.argv) > 1 and sys.argv[1] in ('--setup', '-s'):
+            from rich.console import Console
+            console = Console()
             wizard = SetupWizard(console)
             if wizard.run():
                 sys.exit(0)
@@ -1129,6 +1158,8 @@ def main():
         try:
             config = Config()
         except ValueError:
+            from rich.console import Console
+            console = Console()
             # Configuration is incomplete, run setup wizard
             console.print("[yellow]Configuration incomplete. Running setup wizard...[/yellow]\n")
             wizard = SetupWizard(console)

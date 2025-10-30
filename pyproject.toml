@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "terminal-chat"
-version = "0.1.0"
+version = "0.1.1"
 description = "A terminal-based chat tool for interacting with LLMs via OpenRouter API"
 readme = "README.md"
 requires-python = ">=3.8"
